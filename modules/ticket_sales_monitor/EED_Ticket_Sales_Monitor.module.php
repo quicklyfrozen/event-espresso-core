@@ -329,7 +329,7 @@ class EED_Ticket_Sales_Monitor extends EED_Module
      * @return bool
      * @throws EE_Error
      */
-    protected function _release_reserved_ticket(EE_Ticket $ticket, $quantity = 1)
+    protected function _release_reserved_ticket(EE_Ticket $ticket, $quantity = 0)
     {
         if (self::debug) {
             echo '<br /> . . . ticket->ID: ' . $ticket->ID();
