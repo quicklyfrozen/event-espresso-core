@@ -1243,47 +1243,42 @@ class EE_Checkout {
 	 * @param string $line
 	 * @param array  $info
 	 * @param bool   $display_request
-	 * @throws \EE_Error
-	 */
-	public function log( $class = '', $func = '', $line = '', $info = array(), $display_request = false ) {
-		$disabled = true;
-		if ( WP_DEBUG && ! $disabled ) {
-			$debug_data = get_option( 'EE_DEBUG_SPCO_' . EE_Session::instance()->id(), array() );
-			$default_data = array(
-				$class 		=> $func . '() : ' . $line,
-				'request->step' 		=> $this->step,
-				'request->action' 	=> $this->action,
-				'current_step->slug' => $this->current_step instanceof EE_SPCO_Reg_Step ?
-					$this->current_step->slug() : '',
-				'current_step->completed' => $this->current_step instanceof EE_SPCO_Reg_Step ?
-					$this->current_step->completed() : '',
-				'txn_status_updated' => $this->transaction->txn_status_updated(),
-				'reg_status_updated' => $this->reg_status_updated,
-				'reg_url_link' => $this->reg_url_link,
-				'REQ' => $display_request ? $_REQUEST : '',
-			);
-			if ( $this->transaction instanceof EE_Transaction ) {
-				$default_data[ 'TXN_status' ] 		= $this->transaction->status_ID();
-				$default_data[ 'TXN_reg_steps' ] 	= $this->transaction->reg_steps();
-				foreach ( $this->transaction->registrations( $this->reg_cache_where_params ) as $REG_ID => $registration ) {
-					$default_data[ 'registrations' ][ $REG_ID ] = $registration->status_ID();
-				}
-				if ( $this->transaction->ID() ) {
-					$TXN_ID = 'EE_Transaction: ' . $this->transaction->ID();
-					// don't serialize objects
-					$info = $this->_strip_objects( $info );
-					if ( ! isset( $debug_data[ $TXN_ID ] ) ) {
-						$debug_data[ $TXN_ID ] = array();
-					}
-					$debug_data[ $TXN_ID ][ microtime() ] = array_merge(
-						$default_data,
-						$info
-					);
-					update_option( 'EE_DEBUG_SPCO_' . EE_Session::instance()->id(), $debug_data );
-				}
-			}
-		}
-	}
+     * @throws \InvalidArgumentException
+     * @throws \EventEspresso\core\exceptions\InvalidInterfaceException
+     * @throws \EventEspresso\core\exceptions\InvalidDataTypeException
+     * @throws \EE_Error
+     */
+    public function log($class = '', $func = '', $line = '', $info = array(), $display_request = true)
+    {
+        $data = array(
+            'request->step'           => $this->step,
+            'request->action'         => $this->action,
+            'current_step->slug'      => $this->current_step instanceof EE_SPCO_Reg_Step
+                ? $this->current_step->slug()
+                : '',
+            'current_step->completed' => $this->current_step instanceof EE_SPCO_Reg_Step
+                ? $this->current_step->completed()
+                : '',
+            'next_step->slug' => $this->next_step instanceof EE_SPCO_Reg_Step
+                ? $this->next_step->slug()
+                : '',
+            'txn_status_updated'      => $this->transaction->txn_status_updated(),
+            'reg_status_updated'      => $this->reg_status_updated,
+            'reg_url_link'            => $this->reg_url_link,
+        );
+        if ($this->transaction instanceof EE_Transaction) {
+            $data['TXN_status']    = $this->transaction->status_ID();
+            $data['TXN_reg_steps'] = $this->transaction->reg_steps();
+            foreach ($this->transaction->registrations($this->reg_cache_where_params) as $REG_ID => $registration) {
+                $data['registrations'][ $REG_ID ] = $registration->status_ID();
+            }
+            if ($this->transaction->ID()) {
+                // don't serialize objects
+                $data = array_merge($data, $info);
+                EE_Log::logTxn($class, $func, $line, $this->transaction, $data, $display_request);
+            }
+        }
+    }
 
 
 	/**
@@ -1293,22 +1288,7 @@ class EE_Checkout {
 	 * @return array
 	 */
 	public function _strip_objects( $info = array() ) {
-		foreach ( (array)$info as $key => $value ) {
-			if ( is_array( $value )) {
-				$info[ $key ] = $this->_strip_objects( $value );
-			} else if ( is_object( $value ) ) {
-				$object_class = get_class( $value );
-				$info[ $object_class ] = array();
-				$info[ $object_class ][ 'ID' ] = method_exists( $value, 'ID' ) ? $value->ID() : 0;
-				if ( method_exists( $value, 'status' ) ) {
-					$info[ $object_class ][ 'status' ] = $value->status();
-				} else if ( method_exists( $value, 'status_ID' ) ) {
-					$info[ $object_class ][ 'status' ] = $value->status_ID();
-				}
-				unset( $info[ $key ] );
-			}
-		}
-		return (array)$info;
+		return EE_Log::stripObjects($info);
 	}
 
 

@@ -243,7 +243,93 @@ class EE_Log {
 	}
 
 
+    /**
+     * debug
+     *
+     * @param string $class
+     * @param string $func
+     * @param string $line
+     * @param mixed|object $object
+     * @param array $extra_data
+     * @param bool   $display_request
+     * @throws \InvalidArgumentException
+     * @throws \EventEspresso\core\exceptions\InvalidInterfaceException
+     * @throws \EventEspresso\core\exceptions\InvalidDataTypeException
+     * @throws \EE_Error
+     */
+    public static function logTxn(
+        $class = '',
+        $func = '',
+        $line = '',
+        $object = null,
+        array $extra_data = array(),
+        $display_request = true
+    ) {
+        $disabled = false; // true false
+        if (WP_DEBUG && ! $disabled && EE_Registry::instance()->SSN instanceof EE_Session) {
+            $ID                            = $object instanceof EE_Base_Class
+                ? get_class($object) . ': ' . $object->ID()
+                : '';
+            $ID                            = $ID === '' && is_object($object)
+                ? get_class($object)
+                : $ID;
+            $debug_data                    = get_option('EE_DEBUG_SPCO_' . EE_Registry::instance()->SSN->id(), array());
+            // $time = array_sum(explode(' ', microtime()));
+            $time = EE_Log::microTime();
+            $debug_data[ $time ] = array_merge(
+                EE_Log::stripObjects(
+                    array(
+                        $class => $func . '() : ' . $line,
+                        $ID    => $object,
+                    )
+                ),
+                EE_Log::stripObjects($extra_data),
+                array(
+                    'REQ' => $display_request ? $_REQUEST : '',
+                )
+            );
+            update_option('EE_DEBUG_SPCO_' . EE_Registry::instance()->SSN->id(), $debug_data);
+        }
+    }
 
+
+    /**
+     * _strip_objects
+     *
+     * @param array $info
+     * @return array
+     */
+    public static function stripObjects($info = array())
+    {
+        foreach ((array) $info as $key => $value) {
+            if (is_array($value)) {
+                $info[ $key ] = EE_Log::stripObjects($value);
+            } elseif (is_object($value)) {
+                $object_class                = get_class($value);
+                $info[ $object_class ]       = array();
+                $info[ $object_class ]['ID'] = method_exists($value, 'ID') ? $value->ID() : 0;
+                if (method_exists($value, 'status')) {
+                    $info[ $object_class ]['status'] = $value->status();
+                } elseif (method_exists($value, 'status_ID')) {
+                    $info[ $object_class ]['status'] = $value->status_ID();
+                }
+                unset($info[ $key ]);
+            } else  {
+                $info[ $key ] = $value;
+            }
+        }
+        return (array) $info;
+    }
+
+
+    /**
+     * @return string
+     */
+    private static function microTime()
+    {
+        $temp = explode(' ', microtime());
+        return bcadd($temp[0], $temp[1], 6);
+    }
 }
 // End of file EE_Log.core.php
 // Location: /core/EE_Log.core.php

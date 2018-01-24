@@ -566,7 +566,12 @@ class Transactions_Admin_Page extends EE_Admin_Page
     protected function _transaction_details()
     {
         do_action('AHEE__Transactions_Admin_Page__transaction_details__start', $this->_transaction);
-
+        $total_line_item = $this->_transaction->total_line_item(false);
+        if($total_line_item instanceof EE_Line_Item) {
+            $initial_total = $total_line_item->total();
+            $total_line_item->recalculate_total_including_taxes();
+        }
+        $this->_transaction->update_status_based_on_total_paid();
         $this->_set_transaction_status_array();
 
         $this->_template_args                      = array();

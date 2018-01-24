@@ -514,7 +514,7 @@ class EED_Single_Page_Checkout extends EED_Module
             // initialize each reg step, which gives them the chance to potentially alter the process
             $this->_initialize_reg_steps();
             // DEBUG LOG
-            //$this->checkout->log( __CLASS__, __FUNCTION__, __LINE__ );
+            $this->checkout->log( __CLASS__, __FUNCTION__, __LINE__ );
             // get reg form
             if( ! $this->_check_form_submission()) {
                 EED_Single_Page_Checkout::$_initialized = true;
@@ -1794,6 +1794,17 @@ class EED_Single_Page_Checkout extends EED_Module
             || $this->checkout->action === 'redirect_form'
             || $this->checkout->action === 'update_checkout'
         ) {
+            // DEBUG LOG
+            $this->checkout->log(
+                __CLASS__, __FUNCTION__, __LINE__,
+                array(
+                    'action'                     => $this->checkout->action,
+                    'redirect'                   => $this->checkout->redirect,
+                    'json_response_redirect_url' => $this->checkout->json_response->redirect_url(),
+                    'redirect_url'               => $this->checkout->redirect_url,
+                    'continue_reg'               => $this->checkout->continue_reg,
+                )
+            );
             return;
         }
         // AJAX response
@@ -1817,14 +1828,15 @@ class EED_Single_Page_Checkout extends EED_Module
         // if this is an ajax request
         if (EE_Registry::instance()->REQ->ajax) {
             // DEBUG LOG
-            //$this->checkout->log(
-            //	__CLASS__, __FUNCTION__, __LINE__,
-            //	array(
-            //		'json_response_redirect_url' => $this->checkout->json_response->redirect_url(),
-            //		'redirect'                   => $this->checkout->redirect,
-            //		'continue_reg'               => $this->checkout->continue_reg,
-            //	)
-            //);
+            $this->checkout->log(
+            	__CLASS__, __FUNCTION__, __LINE__,
+            	array(
+                    'redirect'                   => $this->checkout->redirect,
+                    'json_response_redirect_url' => $this->checkout->json_response->redirect_url(),
+                    'redirect_url'               => $this->checkout->redirect_url,
+                    'continue_reg'               => $this->checkout->continue_reg,
+            	)
+            );
             $this->checkout->json_response->set_registration_time_limit(
                 $this->checkout->get_registration_time_limit()
             );
@@ -1854,14 +1866,14 @@ class EED_Single_Page_Checkout extends EED_Module
             // store notices in a transient
             EE_Error::get_notices(false, true, true);
             // DEBUG LOG
-            //$this->checkout->log(
-            //	__CLASS__, __FUNCTION__, __LINE__,
-            //	array(
-            //		'headers_sent' => headers_sent(),
-            //		'redirect_url'     => $this->checkout->redirect_url,
-            //		'headers_list'    => headers_list(),
-            //	)
-            //);
+            $this->checkout->log(
+            	__CLASS__, __FUNCTION__, __LINE__,
+            	array(
+            		'headers_sent' => headers_sent(),
+            		'redirect_url'     => $this->checkout->redirect_url,
+            		'headers_list'    => headers_list(),
+            	)
+            );
             wp_safe_redirect($this->checkout->redirect_url);
             exit();
         }

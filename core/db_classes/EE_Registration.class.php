@@ -879,10 +879,11 @@ class EE_Registration extends EE_Soft_Delete_Base_Class implements EEI_Registrat
      * @throws InvalidDataTypeException
      * @throws EE_Error
      * @throws InvalidArgumentException
+     * @throws EntityNotFoundException
      */
     public function payment_overview_url($clear_session = false)
     {
-        return add_query_arg(
+        $payment_overview_url = add_query_arg(
             (array) apply_filters(
                 'FHEE__EE_Registration__payment_overview_url__query_args',
                 array(
@@ -895,6 +896,16 @@ class EE_Registration extends EE_Soft_Delete_Base_Class implements EEI_Registrat
             ),
             EE_Registry::instance()->CFG->core->reg_page_url()
         );
+        EE_Log::logTxn(
+            __CLASS__, __FUNCTION__, __LINE__,
+            $this->transaction(),
+            array(
+                'REG_ID'               => $this->ID(),
+                'e_reg_url_link'       => $this->reg_url_link(),
+                'payment_overview_url' => $payment_overview_url,
+            )
+        );
+        return $payment_overview_url;
     }
 
 
@@ -907,10 +918,11 @@ class EE_Registration extends EE_Soft_Delete_Base_Class implements EEI_Registrat
      * @throws InvalidDataTypeException
      * @throws EE_Error
      * @throws InvalidArgumentException
+     * @throws EntityNotFoundException
      */
     public function edit_attendee_information_url()
     {
-        return add_query_arg(
+        $attendee_information_url = add_query_arg(
             (array) apply_filters(
                 'FHEE__EE_Registration__edit_attendee_information_url__query_args',
                 array(
@@ -922,6 +934,16 @@ class EE_Registration extends EE_Soft_Delete_Base_Class implements EEI_Registrat
             ),
             EE_Registry::instance()->CFG->core->reg_page_url()
         );
+        EE_Log::logTxn(
+            __CLASS__, __FUNCTION__, __LINE__,
+            $this->transaction(),
+            array(
+                'REG_ID'                   => $this->ID(),
+                'e_reg_url_link'           => $this->reg_url_link(),
+                'attendee_information_url' => $attendee_information_url,
+            )
+        );
+        return $attendee_information_url;
     }
 
 
