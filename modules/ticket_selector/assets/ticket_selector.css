@@ -435,4 +435,14 @@
 		display: table;
 		font-size: 1em;
 	}
+
+}
+
+@media (max-width: 400px) {
+
+	.ticket-selector-tbl-qty-slct {
+		width: auto;
+		padding: 0;
+	}
+	
 }
